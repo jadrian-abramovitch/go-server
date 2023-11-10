@@ -1,0 +1,6 @@
+{
+    "courseId": 4,
+    "instructor": "Hamlet",
+    "name": "Drama",
+    "preRequisites": [2]
+}
