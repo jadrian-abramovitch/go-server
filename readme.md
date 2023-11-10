@@ -1,0 +1,1 @@
+Simple go server using gin, just messing around
