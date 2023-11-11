@@ -1,0 +1,7 @@
+{
+    "courseId": 4,
+    "instructor": "MacBeth",
+    "name": "Drama",
+    "preRequisites": [2]
+}
+
