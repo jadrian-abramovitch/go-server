@@ -18,50 +18,56 @@ type Course struct {
 	// PreRequisites []int  `json:"preRequisites"`
 }
 
-var courses = []Course{
+var initialCourses = []Course{
 	{1, "Smith", "Calculus"},
 	{2, "Chen", "Philosophy"},
 	{3, "Anderson", "Calculus 2"},
 }
 
-// var courses = []Course{
-// 	{1, "Smith", "Calculus", []int{}},
-// 	{2, "Chen", "Philosophy", []int{}},
-// 	{3, "Anderson", "Calculus 2", []int{1, 2}},
-// }
-
-func getAllCourses(c *gin.Context) {
-	// c.IndentedJSON(http.StatusOK, courses)
+func getAllCourses(db *sql.DB) ([]Course, error) {
+	rows, err := db.Query("SELECT * FROM courses")
+	if err != nil {
+		return []Course{}, err
+	}
+	var courses []Course
+	for rows.Next() {
+		var result Course
+		if err := rows.Scan(&result.CourseID, &result.Instructor, &result.Name); err != nil {
+			return []Course{}, err
+		}
+		courses = append(courses, result)
+	}
+	return courses, nil
 }
 
-func createCourse(c *gin.Context) {
+func createCourse(c *gin.Context, db *sql.DB) error {
 	var newCourse Course
 	if err := c.BindJSON(&newCourse); err != nil {
-		return
+		return err
 	}
 
-	courses = append(courses, newCourse)
-	c.IndentedJSON(http.StatusCreated, newCourse)
+	if _, err := db.Exec("INSERT INTO courses (CourseId, Instructor, Name) VALUES (?,?,?)", newCourse.CourseID, newCourse.Instructor, newCourse.Name); err != nil {
+		return err
+	}
+	return nil
 }
 
-func deleteCourse(c *gin.Context) {
+func deleteCourse(c *gin.Context, db *sql.DB) {
 	courseId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.String(http.StatusBadRequest, "Could not parse ID")
 		return
 	}
 
-	for i, course := range courses {
-		if course.CourseID == courseId {
-			courses = append(courses[:i], courses[i+1:]...)
-			c.String(http.StatusOK, fmt.Sprintf("Course %d deleted", courseId))
-			return
-		}
+	if _, err := db.Exec("DELETE FROM courses WHERE CourseID=?", courseId); err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
 	}
-	c.String(http.StatusNotFound, "Could not find course with that ID")
+
+	c.String(http.StatusOK, fmt.Sprintf("Course with id %d deleted successfully", courseId))
 }
 
-func updateCourse(c *gin.Context) {
+func updateCourse(c *gin.Context, db *sql.DB) {
 	courseId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.String(http.StatusBadRequest, "Could not parse ID")
@@ -73,26 +79,34 @@ func updateCourse(c *gin.Context) {
 		c.String(http.StatusNotFound, "Could not parse input")
 		return
 	}
-	for i, course := range courses {
-		if course.CourseID == courseId {
-			courses = append(append(courses[:i], updatedCourse), courses[i+1:]...)
-			c.String(http.StatusOK, fmt.Sprintf("Course %d updated", courseId))
-			return
-		}
+
+	if _, err := db.Exec("UPDATE courses SET Instructor = ?, Name = ? WHERE CourseID = ?", updatedCourse.Instructor, updatedCourse.Name, courseId); err != nil {
+		c.String(http.StatusInternalServerError, "Could not update value")
+		return
 	}
-	c.String(http.StatusNotFound, "Could not find course with that ID")
+
+	c.String(http.StatusOK, "Course patched succesfully")
 }
 
 func setupTable(db *sql.DB) error {
-	fmt.Println("results for insert: ", courses[1])
-	_, err := db.Exec("INSERT INTO courses (CourseId, Instructor, Name) VALUES (?,?,?)", courses[1].CourseID, courses[1].Instructor, courses[1].Name)
-	if err != nil {
+	if _, err := db.Exec("DROP TABLE IF EXISTS courses"); err != nil {
 		return err
 	}
+	if _, err := db.Exec("CREATE TABLE COURSES (CourseID INT PRIMARY KEY NOT NULL, Instructor CHAR(50), Name CHAR(50))"); err != nil {
+		return err
+	}
+	for _, course := range initialCourses {
+		if _, err := db.Exec("INSERT INTO courses (CourseId, Instructor, Name) VALUES (?,?,?)", course.CourseID, course.Instructor, course.Name); err != nil {
+			return err
+		}
+	}
+
 	rows, err := db.Query("SELECT * FROM courses")
 	if err != nil {
 		return err
 	}
+
+	//delete this later
 	for rows.Next() {
 		var result Course
 		if err := rows.Scan(&result.CourseID, &result.Instructor, &result.Name); err != nil {
@@ -104,26 +118,61 @@ func setupTable(db *sql.DB) error {
 	return nil
 }
 
+func getCourse(courseId int, db *sql.DB) (Course, error) {
+	row := db.QueryRow("SELECT * FROM courses WHERE CourseID = ?", courseId)
+	var course Course
+	if err := row.Scan(&course.CourseID, &course.Instructor, &course.Name); err != nil {
+		return Course{}, err
+	}
+	return course, nil
+}
+
 func main() {
-	db, err := sql.Open("sqlite3",
-		"file:test.db")
+	db, err := sql.Open("sqlite3", "file:test.db")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 	if err := setupTable(db); err != nil {
-		fmt.Println("Couldn't insert data", err)
+		fmt.Println("Couldn't setup db", err)
 		return
 	}
+
 	r := gin.Default()
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
+	r.GET("/course/:id", func(c *gin.Context) {
+		courseId, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.String(http.StatusBadRequest, "Could not parse ID")
+			return
+		}
+		course, err := getCourse(courseId, db)
+		if err != nil {
+			c.String(http.StatusInternalServerError, "Could not find course")
+			return
+		}
+		c.IndentedJSON(http.StatusOK, course)
 	})
-	r.GET("/courses", getAllCourses)
-	r.POST("/newCourse", createCourse)
-	r.DELETE("/course/:id", deleteCourse)
-	r.PATCH("/course/:id", updateCourse)
+	r.GET("/courses", func(c *gin.Context) {
+		result, err := getAllCourses(db)
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error()) // dev mode only
+			return
+		}
+		c.IndentedJSON(http.StatusOK, result)
+	})
+	r.POST("/newCourse", func(c *gin.Context) {
+		err := createCourse(c, db)
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error()) // dev mode only
+			return
+		}
+		c.String(http.StatusOK, "Course created succesfully")
+	})
+	r.DELETE("/course/:id", func(c *gin.Context) {
+		deleteCourse(c, db)
+	})
+	r.PATCH("/course/:id", func(c *gin.Context) {
+		updateCourse(c, db)
+	})
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
