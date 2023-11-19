@@ -76,6 +76,7 @@ func (handler HandlerService) updateCourseHandler(c *gin.Context) {
 		return
 	}
 	if err := handler.dbService.updateCourse(courseId, updatedCourse); err != nil {
+		fmt.Printf(err.Error())
 		c.String(http.StatusInternalServerError, "Could not update course")
 		return
 	}

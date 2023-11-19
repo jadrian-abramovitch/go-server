@@ -1,10 +1,12 @@
 # Simple go server using gin, just messing around
 
 ## Commands for testing
+### SETUP:
+> Install sqlite3
 ### Build server: 
-> go build main.go
+> go build 
 ### Run server:
->./main
+>./go-server
 
 ### curl commands
 * > curl localhost:8080/courses

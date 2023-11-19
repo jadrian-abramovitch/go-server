@@ -10,27 +10,27 @@ import (
 )
 
 type Course struct {
-	CourseID   int    `json:"courseId" db:"courseId"`
-	Instructor string `json:"instructor" db:"instructor"`
-	Name       string `json:"name" db:"name"`
-	// PreRequisites []int  `json:"preRequisites"`
+	CourseID      int    `json:"courseId" db:"courseId"`
+	Instructor    string `json:"instructor" db:"instructor"`
+	Name          string `json:"name" db:"name"`
+	Prerequisites []int  `json:"preRequisites"`
 }
 
 var initialCourses = []Course{
-	{1, "Smith", "Calculus"},
-	{2, "Chen", "Philosophy"},
-	{3, "Anderson", "Calculus 2"},
+	{1, "Smith", "Calculus", []int{2, 3}},
+	{2, "Chen", "Philosophy", []int{3, 1}},
+	{3, "Anderson", "Calculus 2", []int{1}},
 }
 
-func setupTable(db *sql.DB) error {
+func setupTable(db *sql.DB, dbService DbService) error {
 	if _, err := db.Exec("DROP TABLE IF EXISTS courses"); err != nil {
 		return err
 	}
-	if _, err := db.Exec("CREATE TABLE COURSES (CourseID INT PRIMARY KEY NOT NULL, Instructor CHAR(50), Name CHAR(50))"); err != nil {
+	if _, err := db.Exec("CREATE TABLE COURSES (CourseID INT PRIMARY KEY NOT NULL, Instructor CHAR(50), Name CHAR(50), Prerequisites CHAR(50))"); err != nil {
 		return err
 	}
 	for _, course := range initialCourses {
-		if _, err := db.Exec("INSERT INTO courses (CourseId, Instructor, Name) VALUES (?,?,?)", course.CourseID, course.Instructor, course.Name); err != nil {
+		if err := dbService.createCourse(course); err != nil {
 			return err
 		}
 	}
@@ -49,12 +49,12 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	if err := setupTable(db); err != nil {
+	dbService := DbService{db}
+	if err := setupTable(db, dbService); err != nil {
 		fmt.Println("Couldn't setup db", err)
 		return
 	}
 
-	dbService := DbService{db}
 	handlers := HandlerService{dbService}
 
 	r := gin.Default()
