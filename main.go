@@ -4,16 +4,17 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type Course struct {
-	CourseID      int    `json:"courseId" db:"courseId"`
-	Instructor    string `json:"instructor" db:"instructor"`
-	Name          string `json:"name" db:"name"`
-	Prerequisites []int  `json:"preRequisites"`
+	CourseID      int    `json:"courseId" db:"courseId" form:"courseId"`
+	Instructor    string `json:"instructor" db:"instructor" form:"instructor"`
+	Name          string `json:"name" db:"name" form:"name"`
+	Prerequisites []int  `json:"preRequisites" form:"preRequisites"`
 }
 
 var initialCourses = []Course{
@@ -63,5 +64,15 @@ func main() {
 	r.POST("/newCourse", handlers.createCourseHandler)
 	r.DELETE("/course/:id", handlers.deleteCourseHandler)
 	r.PATCH("/course/:id", handlers.updateCourseHandler)
+
+	r.LoadHTMLFiles("index.html")
+
+	r.GET("/", func(c *gin.Context) {
+		allCourses, err := dbService.getAllCourses()
+		if err != nil {
+			fmt.Println("no courses")
+		}
+		c.HTML(http.StatusOK, "index.html", allCourses)
+	})
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }

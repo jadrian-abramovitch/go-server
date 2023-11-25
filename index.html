@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>Courses, come get your Courses</h1>
+    {{ range . }}
+        <h2>
+            Name: {{ .Name }}
+        </h2>
+        <h3>
+            Instructor: {{ .Instructor }}
+        </h3>
+        <h3>
+            Prerequisites: {{ .Prerequisites }}
+        </h3>
+        <button onclick="deleteCourse({{ .CourseID }})">Delete Course</button>
+    {{ end }}
+    <h2>Add a new course!</h2>
+    <form action="http://localhost:8080/newCourse" method="post" enctype="application/json">
+        <label for="courseId">CourseID:</label>
+        <input type="number" id="courseId" name="courseId"><br><br>
+        <label for="name">Course Name:</label>
+        <input type="text" id="name" name="name"><br><br>
+        <label for="instructor">Instructor:</label>
+        <input type="text" id="instructor" name="instructor"><br><br>
+        <label for="preRequisites">preRequisites:</label>
+        <input type="number" id="preRequisites" name="preRequisites"><br><br>
+        <input type="submit" value="Submit"> 
+    </form>
+    <script>
+        function deleteCourse(CourseID) {
+            alert("test" + String(CourseID));
+            axios.delete("http://localhost:8080/course/" + String(CourseID));
+        }
+    </script>
+</body>
+</html>

@@ -37,7 +37,8 @@ func (handler HandlerService) getAllCoursesHandler(c *gin.Context) {
 
 func (handler HandlerService) createCourseHandler(c *gin.Context) {
 	var newCourse Course
-	if err := c.BindJSON(&newCourse); err != nil {
+	if err := c.Bind(&newCourse); err != nil {
+		fmt.Print(err)
 		c.String(http.StatusInternalServerError, err.Error()) // dev mode only
 		return
 	}
