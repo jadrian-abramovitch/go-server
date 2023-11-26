@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
@@ -65,7 +66,7 @@ func main() {
 	r.DELETE("/course/:id", handlers.deleteCourseHandler)
 	r.PATCH("/course/:id", handlers.updateCourseHandler)
 
-	r.LoadHTMLFiles("index.html")
+	r.LoadHTMLFiles("index.html", "edit.html")
 
 	r.GET("/", func(c *gin.Context) {
 		allCourses, err := dbService.getAllCourses()
@@ -73,6 +74,17 @@ func main() {
 			fmt.Println("no courses")
 		}
 		c.HTML(http.StatusOK, "index.html", allCourses)
+	})
+	r.GET("/edit/:id", func(c *gin.Context) {
+		courseId, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			fmt.Println("could not parse id")
+		}
+		course, err := dbService.getCourse(courseId)
+		if err != nil {
+			fmt.Println("no courses")
+		}
+		c.HTML(http.StatusOK, "edit.html", course)
 	})
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }

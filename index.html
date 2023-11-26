@@ -18,10 +18,11 @@
         <h3>
             Prerequisites: {{ .Prerequisites }}
         </h3>
+        <a href="http://localhost:8080/edit/{{ .CourseID }}">Edit Course</a>
         <button onclick="deleteCourse({{ .CourseID }})">Delete Course</button>
     {{ end }}
     <h2>Add a new course!</h2>
-    <form action="http://localhost:8080/newCourse" method="post" enctype="application/json">
+    <form action="http://localhost:8080/newCourse" method="post">
         <label for="courseId">CourseID:</label>
         <input type="number" id="courseId" name="courseId"><br><br>
         <label for="name">Course Name:</label>
@@ -34,7 +35,6 @@
     </form>
     <script>
         function deleteCourse(CourseID) {
-            alert("test" + String(CourseID));
             axios.delete("http://localhost:8080/course/" + String(CourseID));
         }
     </script>

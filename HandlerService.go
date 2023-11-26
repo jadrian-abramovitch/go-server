@@ -73,7 +73,8 @@ func (handler HandlerService) updateCourseHandler(c *gin.Context) {
 
 	var updatedCourse Course
 	if err := c.BindJSON(&updatedCourse); err != nil {
-		c.String(http.StatusNotFound, "Could not parse input")
+		c.String(http.StatusNotFound, err.Error())
+		fmt.Printf("could not parse!!!, err: %s", err.Error())
 		return
 	}
 	if err := handler.dbService.updateCourse(courseId, updatedCourse); err != nil {
