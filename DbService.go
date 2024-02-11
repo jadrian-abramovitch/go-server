@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -31,8 +30,6 @@ func (course Course) toDb() DbCourse {
 }
 
 func (dbCourse DbCourse) toApi() (Course, error) {
-	fmt.Print("test to see logs")
-	fmt.Printf("prereqs: %s", dbCourse.Prerequisites)
 	splicedString := strings.Split(dbCourse.Prerequisites, ",")
 	var prereqArray []int
 	for _, val := range splicedString {
@@ -67,7 +64,7 @@ func (dbService DbService) getAllCourses() ([]Course, error) {
 
 func (dbService DbService) createCourse(newCourse Course) error {
 	course := newCourse.toDb()
-	if _, err := dbService.db.Exec("INSERT INTO courses (CourseId, Instructor, Name, Prerequisites) VALUES (?,?,?,?)", course.CourseID, course.Instructor, course.Name, course.Prerequisites); err != nil {
+	if _, err := dbService.db.Exec("INSERT INTO courses (CourseId, Instructor, Name, Prerequisites) VALUES (NULL,?,?,?)", course.Instructor, course.Name, course.Prerequisites); err != nil {
 		return err
 	}
 	return nil

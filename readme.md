@@ -7,6 +7,8 @@
 > go build 
 ### Run server:
 >./go-server
+### Build [Tailwind](https://tailwindcss.com/docs/installation):
+>npx tailwindcss -i ./src/main.css -o ./src/output.css --watch
 
 ### curl commands
 * > curl localhost:8080/courses

@@ -45,6 +45,7 @@ func (handler HandlerService) createCourseHandler(c *gin.Context) {
 
 	err := handler.dbService.createCourse(newCourse)
 	if err != nil {
+		fmt.Println(err)
 		c.String(http.StatusInternalServerError, err.Error()) // dev mode only
 		return
 	}

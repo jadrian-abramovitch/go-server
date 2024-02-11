@@ -28,7 +28,7 @@ func setupTable(db *sql.DB, dbService DbService) error {
 	if _, err := db.Exec("DROP TABLE IF EXISTS courses"); err != nil {
 		return err
 	}
-	if _, err := db.Exec("CREATE TABLE COURSES (CourseID INT PRIMARY KEY NOT NULL, Instructor CHAR(50), Name CHAR(50), Prerequisites CHAR(50))"); err != nil {
+	if _, err := db.Exec("CREATE TABLE COURSES (CourseID INTEGER PRIMARY KEY, Instructor CHAR(50), Name CHAR(50), Prerequisites CHAR(50))"); err != nil {
 		return err
 	}
 	for _, course := range initialCourses {
@@ -66,7 +66,8 @@ func main() {
 	r.DELETE("/course/:id", handlers.deleteCourseHandler)
 	r.PATCH("/course/:id", handlers.updateCourseHandler)
 
-	r.LoadHTMLFiles("index.html", "edit.html")
+	r.LoadHTMLFiles("templates/index.html", "templates/edit.html")
+	r.Static("/src", "./src")
 
 	r.GET("/", func(c *gin.Context) {
 		allCourses, err := dbService.getAllCourses()
@@ -84,7 +85,7 @@ func main() {
 		if err != nil {
 			fmt.Println("no courses")
 		}
-		c.HTML(http.StatusOK, "edit.html", course)
+		c.HTML(http.StatusOK, "src/edit.html", course)
 	})
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
