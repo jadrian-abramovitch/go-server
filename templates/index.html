@@ -12,24 +12,22 @@
         <h1 class="text-4xl text-teal-500 text-center font-bold m-8">Unquestionably Legitimate University</h1>
         <div class="container m-auto grid grid-cols-3 gap-4 place-items-center ">
         {{ range . }}
-        <div class="mb-8 p-4 border-8 rounded-lg border-indigo-500 bg-indigo-100">
+        <div class="w-72 mb-8 p-4 border-8 rounded-lg border-indigo-500 bg-indigo-100">
             <div class="flex justify-between">
                 <h2 class="text-2xl inline">
                     {{ .Name }}
                 </h2>
-                <div>
-                    <i class="m-1 mt-2 fa-regular fa-pen-to-square text-right"></i>
-                    <i class="m-1 mt-2 fa-solid fa-trash text-right"></i>
+                <div class="ml-2">
+                    <a href="http://localhost:8080/edit/{{ .CourseID }}"><i class="m-1 mt-2 fa-regular fa-pen-to-square text-right"></i></a>
+                    <button onclick="deleteCourse({{ .CourseID }})"><i class="m-1 mt-2 fa-solid fa-trash text-right"></i></button>
                 </div>
             </div>
             <h3>
                 Instructor: {{ .Instructor }}
             </h3>
             <h3>
-                Prerequisites: {{ .Prerequisites }}
+                Prerequisites: 
             </h3>
-            <a href="http://localhost:8080/edit/{{ .CourseID }}">Edit Course</a>
-            <button onclick="deleteCourse({{ .CourseID }})">Delete Course</button>
         </div>
         {{ end }}
         </div>
@@ -45,7 +43,10 @@
     </form>
     <script>
         function deleteCourse(CourseID) {
-            axios.delete("http://localhost:8080/course/" + String(CourseID));
+            console.log('delete course');
+            axios.delete("http://localhost:8080/course/" + String(CourseID))
+                .then(() => window.location.reload())
+                .catch(() => window.alert("failed to delete"));
         }
     </script>
 </body>
